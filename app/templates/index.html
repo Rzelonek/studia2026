@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Infrastructure Manager</title>
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    h1 { margin: 0; font-size: 22px; font-weight: 600; }
+    .subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+
+    .api-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .api-links a {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      background: #1e293b;
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .api-links a:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-item {
+      background: rgba(0,0,0,0.2);
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .stat-val { font-size: 24px; font-weight: 700; display: block; }
+    .stat-lbl { font-size: 12px; color: var(--text-muted); }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-muted); }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      color: white;
+      font-size: 14px;
+    }
+
+    /* FIX: Dropdown white visibility issue */
+    select option {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 9px 15px;
+      font-size: 13px;
+      border: none;
+      transition: background 0.15s;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-secondary { background: #334155; color: white; }
+    .btn-secondary:hover { background: #475569; }
+
+    .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+    .table-container { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    th { padding: 12px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-weight: 500; }
+    td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover { background: rgba(255,255,255,0.015); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .badge-neutral { background: #334155; color: var(--text-muted); }
+
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .table-actions button {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>Infrastructure Hub</h1>
+      <div class="subtitle">Stack: Flask / PostgreSQL / Docker</div>
+    </div>
+    <div class="api-links">
+      <a href="/health" target="_blank">RAW /health</a>
+      <a href="/api/users" target="_blank">RAW /api/users</a>
+      <a href="/api/tasks" target="_blank">RAW /api/tasks</a>
+      <a href="/api/stats" target="_blank">RAW /api/stats</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>API Health status</h2>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div id="statusPill" class="badge badge-error">Checking...</div>
+        <div id="statusMeta" class="subtitle">Awaiting local connection</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Project Metrics</h2>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-val" id="statUsers">0</span>
+          <span class="stat-lbl">Users</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val" id="statTasks">0</span>
+          <span class="stat-lbl">Tasks</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val" id="statInProgress">0</span>
+          <span class="stat-lbl">In Progress</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2 id="userFormTitle">Add New User</h2>
+      <form id="userForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input id="userName" type="text" placeholder="Jan Kowalski" required />
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input id="userEmail" type="email" placeholder="jan@example.com" required />
+        </div>
+        <div class="actions-row">
+          <button type="submit" id="userSubmitBtn" class="btn-primary">Provision User</button>
+          <button type="button" id="userCancelBtn" class="btn-secondary" style="display:none;" onclick="resetUserForm()">Cancel</button>
+        </div>
+      </form>
+      <div id="userMessage" style="margin-top: 10px; font-size: 13px;"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="taskFormTitle">Create New Task</h2>
+      <form id="taskForm">
+        <div class="form-group">
+          <label>Task Title</label>
+          <input id="taskTitle" type="text" placeholder="e.g. CI/CD deployment" required />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="taskDescription" rows="1" placeholder="Short scope..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Assigned User</label>
+          <select id="taskUserId" required></select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="taskStatus">
+            <option value="todo">Pending (To-Do)</option>
+            <option value="in_progress">Active (In Progress)</option>
+            <option value="done">Completed (Done)</option>
+          </select>
+        </div>
+        <div class="actions-row">
+          <button type="submit" id="taskSubmitBtn" class="btn-primary">Create Task</button>
+          <button type="button" id="taskCancelBtn" class="btn-secondary" style="display:none;" onclick="resetTaskForm()">Cancel</button>
+        </div>
+      </form>
+      <div id="taskMessage" style="margin-top: 10px; font-size: 13px;"></div>
+    </div>
+  </div>
+
+  <section class="card" style="margin-bottom: 24px;">
+    <h2>System Users</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th style="text-align: right; width: 160px;">Operations</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr><td colspan="4">Loading system records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Active Tasks</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th style="text-align: right; width: 160px;">Operations</th>
+          </tr>
+        </thead>
+        <tbody id="tasksTableBody">
+          <tr><td colspan="6">Loading operational tasks...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+  let editingUserId = null;
+  let editingTaskId = null;
+  let cachedUsers = [];
+
+  // Health check API fetch
+  async function loadHealth() {
+    const el = document.getElementById("statusPill");
+    const meta = document.getElementById("statusMeta");
+    try {
+      const res = await fetch("/api/health");
+      const data = await res.json();
+      if (res.ok) {
+        el.className = "badge badge-success";
+        el.innerText = "Connected";
+        meta.innerText = "HTTP 200 - Server is up";
+      }
+    } catch (e) {
+      el.className = "badge badge-error";
+      el.innerText = "Disconnected";
+      meta.innerText = "Cannot reach /api/health endpoint";
+    }
+  }
+
+  // Refresh stats, users, and tasks
+  async function refreshData() {
+    try {
+      const [uRes, tRes, sRes] = await Promise.all([
+        fetch("/api/users"),
+        fetch("/api/tasks"),
+        fetch("/api/stats")
+      ]);
+
+      const users = await uRes.json();
+      const tasks = await tRes.json();
+      const stats = await sRes.json();
+
+      cachedUsers = users;
+
+      // Update metrics
+      document.getElementById("statUsers").innerText = stats.total_users || 0;
+      document.getElementById("statTasks").innerText = stats.total_tasks || 0;
+      document.getElementById("statInProgress").innerText = stats.in_progress_tasks || 0;
+
+      // Update User Form Select
+      const select = document.getElementById("taskUserId");
+      if (users.length === 0) {
+        select.innerHTML = `<option value="">Create user first</option>`;
+      } else {
+        select.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
+      }
+
+      // Render Users Table
+      const usersTBody = document.getElementById("usersTableBody");
+      if (users.length === 0) {
+        usersTBody.innerHTML = `<tr><td colspan="4">No users found in database.</td></tr>`;
+      } else {
+        usersTBody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-secondary" onclick="startEditUser(${u.id}, '${u.name}', '${u.email}')">Edit</button>
+                <button class="btn-danger" onclick="deleteUser(${u.id})">Drop</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      // Render Tasks Table
+      const tasksTBody = document.getElementById("tasksTableBody");
+      if (tasks.length === 0) {
+        tasksTBody.innerHTML = `<tr><td colspan="6">No tasks found.</td></tr>`;
+      } else {
+        tasksTBody.innerHTML = tasks.map(t => `
+          <tr>
+            <td>${t.id}</td>
+            <td>${t.title}</td>
+            <td>${t.description || '-'}</td>
+            <td>${t.user_name || 'N/A'}</td>
+            <td><span class="badge badge-neutral">${t.status}</span></td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-secondary" onclick="startEditTask(${t.id}, '${t.title}', '${t.description || ""}', '${t.status}', ${t.user_id})">Edit</button>
+                <button class="btn-danger" onclick="deleteTask(${t.id})">Drop</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+    } catch (e) {
+      console.error("Critical dashboard state fetch failure: ", e);
+    }
+  }
+
+  // --- USER OPERATIONS ---
+  function startEditUser(id, name, email) {
+    editingUserId = id;
+    document.getElementById("userFormTitle").innerText = `Updating User ID ${id}`;
+    document.getElementById("userName").value = name;
+    document.getElementById("userEmail").value = email;
+    document.getElementById("userSubmitBtn").innerText = "Save Changes";
+    document.getElementById("userCancelBtn").style.display = "inline-block";
+    document.getElementById("userName").focus();
+  }
+
+  function resetUserForm() {
+    editingUserId = null;
+    document.getElementById("userForm").reset();
+    document.getElementById("userFormTitle").innerText = "Add New User";
+    document.getElementById("userSubmitBtn").innerText = "Provision User";
+    document.getElementById("userCancelBtn").style.display = "none";
+  }
+
+  async function deleteUser(id) {
+    if (!confirm(`Flush user ID ${id} and their tasks from DB?`)) return;
+    await fetch(`/api/users/${id}`, { method: "DELETE" });
+    refreshData();
+  }
+
+  // --- TASK OPERATIONS ---
+  function startEditTask(id, title, desc, status, userId) {
+    editingTaskId = id;
+    document.getElementById("taskFormTitle").innerText = `Updating Task ID ${id}`;
+    document.getElementById("taskTitle").value = title;
+    document.getElementById("taskDescription").value = desc;
+    document.getElementById("taskUserId").value = userId;
+    document.getElementById("taskStatus").value = status;
+    document.getElementById("taskSubmitBtn").innerText = "Save Changes";
+    document.getElementById("taskCancelBtn").style.display = "inline-block";
+    document.getElementById("taskTitle").focus();
+  }
+
+  function resetTaskForm() {
+    editingTaskId = null;
+    document.getElementById("taskForm").reset();
+    document.getElementById("taskFormTitle").innerText = "Create New Task";
+    document.getElementById("taskSubmitBtn").innerText = "Create Task";
+    document.getElementById("taskCancelBtn").style.display = "none";
+  }
+
+  async function deleteTask(id) {
+    if (!confirm(`Purge task ID ${id}?`)) return;
+    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+    refreshData();
+  }
+
+  // --- SUBMISSIONS ---
+  document.getElementById("userForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById("userName").value.trim(),
+      email: document.getElementById("userEmail").value.trim()
+    };
+
+    let url = "/api/users";
+    let method = "POST";
+
+    if (editingUserId) {
+      url = `/api/users/${editingUserId}`;
+      method = "PUT";
+    }
+
+    const res = await fetch(url, {
+      method: method,
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      resetUserForm();
+      refreshData();
+    } else {
+      const err = await res.json();
+      document.getElementById("userMessage").innerText = err.error || "Operation failed";
+    }
+  });
+
+  document.getElementById("taskForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: document.getElementById("taskTitle").value.trim(),
+      description: document.getElementById("taskDescription").value.trim(),
+      user_id: Number(document.getElementById("taskUserId").value),
+      status: document.getElementById("taskStatus").value
+    };
+
+    let url = "/api/tasks";
+    let method = "POST";
+
+    if (editingTaskId) {
+      url = `/api/tasks/${editingTaskId}`;
+      method = "PUT";
+    }
+
+    const res = await fetch(url, {
+      method: method,
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      resetTaskForm();
+      refreshData();
+    } else {
+      const err = await res.json();
+      document.getElementById("taskMessage").innerText = err.error || "Operation failed";
+    }
+  });
+
+  loadHealth();
+  refreshData();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+services:
+  db:
+    image: postgres:16
+    container_name: db
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+    ports:
+      - "55432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - back_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migration_runner:
+    build:
+      context: .
+      target: final
+    container_name: migration_runner
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://appuser:apppass@db:5432/appdb
+      PYTHONPATH: /app/src
+      FLASK_APP: src/manage.py
+    working_dir: /app
+    command: ["flask", "db", "upgrade", "-d", "migrations"]
+    networks:
+      - back_net
+    restart: "no"
+
+  seed_runner:
+    build:
+      context: .
+      target: final
+    container_name: seed_runner
+    depends_on:
+      db:
+        condition: service_healthy
+      migration_runner:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://appuser:apppass@db:5432/appdb
+      PYTHONPATH: /app/src
+    working_dir: /app
+    command: ["python", "seed/run_seed.py"]
+    volumes:
+      - seed_output:/seed_output
+    networks:
+      - back_net
+    restart: "no"
+
+  app:
+    image: ghcr.io/rzelonek/studia2026-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: final
+    container_name: app
+    depends_on:
+      db:
+        condition: service_healthy
+      seed_runner:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://appuser:apppass@db:5432/appdb
+      PYTHONPATH: /app/src
+    working_dir: /app
+    networks:
+      - front_net
+      - back_net
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - front_net
+
+volumes:
+  db_data:
+  nginx_logs:
+  seed_output:
+
+networks:
+  front_net:
+  back_net:
