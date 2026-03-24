@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
@@ -16,27 +19,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Set image name
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/studia2026-app:latest" >> $GITHUB_ENV
+      - name: Prepare image name
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=ghcr.io/${OWNER}/${REPO}-app:latest" >> $GITHUB_ENV
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build builder stage
-        run: docker build --target builder -t studia2026-builder .
+        run: docker build --target builder -t app-builder .
 
       - name: Run test stage
-        run: docker build --target test -t studia2026-test .
+        run: docker build --target test -t app-test .
 
       - name: Build final image
-        run: docker build --target final -t $IMAGE_NAME .
+        run: docker build --target final -t "$IMAGE_NAME" .
 
       - name: Push final image
         if: github.event_name == 'push'
-        run: docker push $IMAGE_NAME
+        run: docker push "$IMAGE_NAME"
